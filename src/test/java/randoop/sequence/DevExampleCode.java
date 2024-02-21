@@ -38,14 +38,10 @@ public class DevExampleCode {
       TypedOperation newOb =
           TypedOperation.createPrimitiveInitialization(JavaTypes.STRING_TYPE, "hi!");
       TypedOperation addFirst =
-          TypedOperation.forMethod(
-                  LinkedList.class.getMethod("addFirst", Object.class),
-                  AccessibilityPredicate.IS_PUBLIC)
+          TypedOperation.forMethod(LinkedList.class.getMethod("addFirst", Object.class))
               .substitute(substLL);
       TypedOperation size =
-          TypedOperation.forMethod(
-                  LinkedList.class.getMethod("size"), AccessibilityPredicate.IS_PUBLIC)
-              .substitute(substLL);
+          TypedOperation.forMethod(LinkedList.class.getMethod("size")).substitute(substLL);
 
       // Call to operation with wildcard in TreeSet<String>
       InstantiatedType treeSetType = JDKTypes.TREE_SET_TYPE.instantiate(JavaTypes.STRING_TYPE);

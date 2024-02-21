@@ -25,7 +25,6 @@ import randoop.condition.specification.Property;
 import randoop.condition.specification.ThrowsCondition;
 import randoop.operation.TypedClassOperation;
 import randoop.operation.TypedOperation;
-import randoop.reflection.AccessibilityPredicate;
 import randoop.sequence.ExecutableSequence;
 import randoop.sequence.Sequence;
 import randoop.sequence.Variable;
@@ -193,8 +192,7 @@ public class OperationSpecificationTest {
     Constructor<?> reflectionConstructor = c.getConstructor(int.class);
     TypedClassOperation constructorOp = TypedOperation.forConstructor(reflectionConstructor);
     Method method = c.getDeclaredMethod("category", int.class);
-    TypedClassOperation methodOp =
-        TypedOperation.forMethod(method, AccessibilityPredicate.IS_PUBLIC);
+    TypedClassOperation methodOp = TypedOperation.forMethod(method);
     methodOp.setExecutableSpecification(getMethodSpecification(method));
 
     Sequence sequence = new Sequence();
@@ -212,8 +210,7 @@ public class OperationSpecificationTest {
   private ExecutableSequence createBadnessSequence() throws NoSuchMethodException {
     Class<?> c = ClassWithConditions.class;
     Method method = c.getDeclaredMethod("badness", ClassWithConditions.Range.class, int.class);
-    TypedClassOperation methodOp =
-        TypedOperation.forMethod(method, AccessibilityPredicate.IS_PUBLIC);
+    TypedClassOperation methodOp = TypedOperation.forMethod(method);
     methodOp.setExecutableSpecification(getBadnessConditions(method));
 
     Sequence sequence = new Sequence();

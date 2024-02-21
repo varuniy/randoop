@@ -17,7 +17,7 @@ import randoop.Globals;
 public class ExpectedExceptionCheck extends ExceptionCheck {
 
   /** A boolean indicating the accessibility of the method. */
-  private boolean isAccessible;
+  private boolean callReflectively;
 
   /**
    * Creates check that enforces expectation that an exception is thrown by the statement at the
@@ -32,9 +32,9 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
    * @param catchClassName the name of exception to be caught
    */
   public ExpectedExceptionCheck(
-      Throwable exception, int statementIndex, String catchClassName, boolean isAccessible) {
+      Throwable exception, int statementIndex, String catchClassName, boolean callReflectively) {
     super(exception, statementIndex, catchClassName);
-    this.isAccessible = isAccessible;
+    this.callReflectively = callReflectively;
   }
 
   /**
@@ -44,28 +44,29 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
    */
   @Override
   protected void appendTryBehavior(StringBuilder b) {
-    String message;
-    String assertion;
-    if (exception.getClass().isAnonymousClass()) {
-      message = "Expected anonymous exception";
+    String assertionMessage;
+    if (callReflectively) {
+      assertionMessage = "Expected exception of type java.lang.reflect.InvocationTargetException";
     } else {
-      String exceptionMessage;
-      try {
-        exceptionMessage = "; message: " + toAscii(exception.getMessage());
-      } catch (Throwable t) {
-        exceptionMessage = " whose getMessage() throws an exception";
+      String message;
+      if (exception.getClass().isAnonymousClass()) {
+        message = "Expected anonymous exception";
+      } else {
+        String exceptionMessage;
+        try {
+          exceptionMessage = "; message: " + toAscii(exception.getMessage());
+        } catch (Throwable t) {
+          exceptionMessage = " whose getMessage() throws an exception";
+        }
+        message = "Expected exception of type " + getExceptionName() + exceptionMessage;
       }
-      message = "Expected exception of type " + getExceptionName() + exceptionMessage;
+      assertionMessage = StringsPlume.escapeJava(message);
     }
-    if (isAccessible) {
-      assertion = "org.junit.Assert.fail(\"" + StringsPlume.escapeJava(message) + "\")";
-    } else {
-      assertion =
-          "org.junit.Assert.fail(\""
-              + "Expected exception of type java.lang.reflect.InvocationTargetException"
-              + "\")";
-    }
-    b.append(Globals.lineSep).append("  ").append(assertion).append(";").append(Globals.lineSep);
+    b.append(Globals.lineSep)
+        .append("  org.junit.Assert.fail(\"")
+        .append(assertionMessage)
+        .append("\");")
+        .append(Globals.lineSep);
   }
 
   /**
@@ -89,7 +90,7 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
    */
   @Override
   protected void appendCatchBehavior(StringBuilder b, String catchClassName) {
-    if (!isAccessible) {
+    if (callReflectively) {
       b.append("catch (")
           .append("java.lang.reflect.InvocationTargetException")
           .append(" e) {")
