@@ -131,7 +131,7 @@ public class AccessibilityTest {
       for (Method m : expectedMethods) {
         assertTrue(
             "method " + m.getName() + " should occur",
-            actual.contains(createMethodCall(m, declaringType, accessibility.isAccessible(m))));
+            actual.contains(createMethodCall(m, declaringType, !accessibility.isAccessible(m))));
       }
     } catch (RandoopTypeException e) {
       fail("Type error: " + e.getMessage());
@@ -229,7 +229,7 @@ public class AccessibilityTest {
       for (Method m : expectedMethods) {
         assertFalse(
             "method " + m.getName() + " should occur",
-            actual.contains(createMethodCall(m, declaringType, true)));
+            actual.contains(createMethodCall(m, declaringType)));
       }
     } catch (RandoopTypeException e) {
       fail("Type error: " + e.getMessage());
@@ -326,7 +326,7 @@ public class AccessibilityTest {
       for (Method m : expectedMethods) {
         assertTrue(
             "method " + m.getName() + " should occur",
-            actual.contains(createMethodCall(m, declaringType, accessibility.isAccessible(m))));
+            actual.contains(createMethodCall(m, declaringType, !accessibility.isAccessible(m))));
       }
     } catch (RandoopTypeException e) {
       fail("Type error: " + e.getMessage());
@@ -436,8 +436,8 @@ public class AccessibilityTest {
         assertTrue(
             "method " + m.getName() + " should occur",
             actual.contains(
-                createMethodCall(
-                    m, declaringType, true))); // every method is public in expectedMethods
+                // every method is public in expectedMethods
+                createMethodCall(m, declaringType)));
       }
 
       for (Constructor<?> co : expectedConstructors) {
@@ -560,10 +560,15 @@ public class AccessibilityTest {
     return new TypedClassOperation(op, declaringType, new TypeTuple(paramTypes), declaringType);
   }
 
-  private TypedOperation createMethodCall(
-      Method m, ClassOrInterfaceType declaringType, boolean isAccessible)
+  private TypedOperation createMethodCall(Method m, ClassOrInterfaceType declaringType)
       throws RandoopTypeException {
-    MethodCall op = new MethodCall(m, isAccessible);
+    return createMethodCall(m, declaringType, false);
+  }
+
+  private TypedOperation createMethodCall(
+      Method m, ClassOrInterfaceType declaringType, boolean reflectiveCall)
+      throws RandoopTypeException {
+    MethodCall op = new MethodCall(m, reflectiveCall);
     List<Type> paramTypes = new ArrayList<>();
     if (!Modifier.isStatic(m.getModifiers() & Modifier.methodModifiers())) {
       paramTypes.add(declaringType);
