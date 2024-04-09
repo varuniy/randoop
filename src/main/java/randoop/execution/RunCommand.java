@@ -35,6 +35,8 @@ public class RunCommand {
       throws CommandException {
 
     String[] args = command.toArray(new String[0]);
+    System.out.println("args: " + Arrays.toString(args));
+    System.out.println("working directory: " + workingDirectory.toString());
     CommandLine cmdLine = new CommandLine(args[0]); // constructor requires executable name
     cmdLine.addArguments(Arrays.copyOfRange(args, 1, args.length));
 

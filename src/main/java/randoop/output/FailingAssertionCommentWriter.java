@@ -123,6 +123,7 @@ public class FailingAssertionCommentWriter implements CodeWriter {
 
     int iteration = 0; // Used to create unique working directory name.
     boolean passing = false; // true if all tests pass
+    System.out.println("entered write class code");
 
     while (!passing) {
       Path workingDirectory = createWorkingDirectory(classname, iteration);
@@ -153,6 +154,7 @@ public class FailingAssertionCommentWriter implements CodeWriter {
         }
 
         if (status.exitStatus == 0) {
+          System.out.println("test ran with no errors");
           passing = true;
         } else if (status.timedOut) {
           throw new Error("runTest timed out for class " + qualifiedClassname + ": " + status);
@@ -170,6 +172,8 @@ public class FailingAssertionCommentWriter implements CodeWriter {
                   + "classSource: "
                   + classSource);
         } else {
+          System.out.println("test ran with errors");
+          System.out.println("status: " + status);
           classSource =
               commentFailingAssertions(packageName, classname, classSource, status, flakyTestNames);
         }
