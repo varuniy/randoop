@@ -1,0 +1,6 @@
+Commands I ran to make RegressionTest0 pass.
+
+javac -cp .:/path/to/junit-4.12.jar:/mnt/c/Users/varun/OneDrive/UW/GRTResearch/grt-testing/tests/ClassViewer-5.0.5b.jar RegressionTest0.java
+java -ea -Xmx3000m -XX:+HeapDumpOnOutOfMemoryError  -classpath .:/path/to/ClassViewer-5.0.5b.jar:/path/to/randoop-all-4.3.2.jar org.junit.runner.JUnitCore RegressionTest0
+
+Normally, my script execution tells me that test088 fails.
