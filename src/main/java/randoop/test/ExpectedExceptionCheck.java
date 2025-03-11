@@ -60,7 +60,14 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
         }
         message = "Expected exception of type " + getExceptionName() + exceptionMessage;
       }
-      assertionMessage = StringsPlume.escapeJava(message);
+      if (isAccessible) {
+        assertionMessage = "org.junit.Assert.fail(\"" + StringsPlume.escapeJava(message) + "\")";
+      } else {
+        assertionMessage =
+            "org.junit.Assert.fail(\""
+                + "Expected exception of type java.lang.reflect.InvocationTargetException"
+                + "\")";
+      }
     }
     b.append(Globals.lineSep)
         .append("  org.junit.Assert.fail(\"")
