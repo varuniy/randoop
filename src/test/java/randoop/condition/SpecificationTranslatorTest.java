@@ -26,7 +26,6 @@ import randoop.condition.specification.Identifiers;
 import randoop.condition.specification.OperationSpecification;
 import randoop.operation.TypedClassOperation;
 import randoop.operation.TypedOperation;
-import randoop.reflection.AccessibilityPredicate;
 import randoop.sequence.ExecutableSequence;
 import randoop.sequence.Sequence;
 import randoop.sequence.Variable;
@@ -62,9 +61,7 @@ public class SpecificationTranslatorTest {
     assertEquals("x2.equals(x0)", Util.replaceWords("result.equals(receiver)", replacements));
 
     String conditionText = "result.equals(receiver)";
-    Sequence sequence =
-        createPrintWriterSequence(
-            TypedOperation.forMethod(method, AccessibilityPredicate.IS_PUBLIC));
+    Sequence sequence = createPrintWriterSequence(TypedOperation.forMethod(method));
 
     List<ExecutableBooleanExpression> postConditions = new ArrayList<>();
     Method conditionMethod =
@@ -163,8 +160,7 @@ public class SpecificationTranslatorTest {
 
     SpecificationCollection collection = SpecificationCollection.create(specList);
     ExecutableSpecification execSpec = collection.getExecutableSpecification(method);
-    TypedClassOperation appendOp =
-        TypedOperation.forMethod(method, AccessibilityPredicate.IS_PUBLIC);
+    TypedClassOperation appendOp = TypedOperation.forMethod(method);
     appendOp.setExecutableSpecification(execSpec);
     Sequence sequence = createPrintWriterSequence(appendOp);
     ExecutableSequence eseq = new ExecutableSequence(sequence);

@@ -156,7 +156,8 @@ public class ReflectionManager {
             m.setAccessible(true);
             applyTo(visitor, m);
           } catch (Exception e) {
-            // Method cannot be reflectively called
+            // Method cannot be reflectively called.
+            // TODO: some kind of error should be thrown here (or at least logging?).
           }
         } else if (isAccessible(m)) {
           if (classIsAccessible || Modifier.isStatic(m.getModifiers())) {

@@ -70,7 +70,7 @@ public class SignatureParserTest {
     TypedClassOperation operation =
         (accessibleObject instanceof Constructor)
             ? TypedOperation.forConstructor((Constructor) accessibleObject)
-            : TypedOperation.forMethod((Method) accessibleObject, AccessibilityPredicate.IS_PUBLIC);
+            : TypedOperation.forMethod((Method) accessibleObject);
 
     String expectedString = inputString.replace(" ", "").replace(".<init>", "");
     String signatureString = operation.getRawSignature().toString();

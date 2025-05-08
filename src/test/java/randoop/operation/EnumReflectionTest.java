@@ -68,7 +68,7 @@ public class EnumReflectionTest {
     for (Method m : exclude) {
       assertFalse(
           "method " + m.toGenericString() + " should not occur in simple enum",
-          actual.contains(createMethodCall(m, declaringType, true)));
+          actual.contains(createMethodCall(m, declaringType)));
     }
   }
 
@@ -134,11 +134,11 @@ public class EnumReflectionTest {
           include.add(createEnumOperation(e));
         }
         for (Method m : c.getDeclaredMethods()) {
-          if (Modifier.isPublic(m.getModifiers())) { // extract only public methods
+          if (Modifier.isPublic(m.getModifiers())) {
             if (!m.getName().equals("values") && !m.getName().equals("valueOf")) {
-              include.add(createMethodCall(m, enumType, true));
+              include.add(createMethodCall(m, enumType));
             } else {
-              exclude.add(createMethodCall(m, enumType, true));
+              exclude.add(createMethodCall(m, enumType));
             }
           }
         }
@@ -180,16 +180,16 @@ public class EnumReflectionTest {
         if (opSet == null) {
           opSet = new HashSet<>();
         }
-        opSet.add(createMethodCall(m, enumType, true));
+        opSet.add(createMethodCall(m, enumType));
         overrideMap.put(m.getName(), opSet);
       }
     }
     for (Method m : c.getDeclaredMethods()) {
-      if (Modifier.isPublic(m.getModifiers())) { // extract only public methods
+      if (Modifier.isPublic(m.getModifiers())) {
         if (!m.getName().equals("values") && !m.getName().equals("valueOf")) {
-          include.add(createMethodCall(m, enumType, true));
+          include.add(createMethodCall(m, enumType));
         } else {
-          exclude.add(createMethodCall(m, enumType, true));
+          exclude.add(createMethodCall(m, enumType));
         }
       }
     }
@@ -198,7 +198,7 @@ public class EnumReflectionTest {
       Set<TypedClassOperation> opSet = overrideMap.get(publicMethod.getName());
       if (opSet != null) {
         TypedClassOperation actualEnumOp =
-            createMethodCall(publicMethod, enumType, true)
+            createMethodCall(publicMethod, enumType)
                 .substitute(interfaceType.getTypeSubstitution());
         include.add(actualEnumOp);
       }
@@ -264,7 +264,7 @@ public class EnumReflectionTest {
     }
 
     for (Method publicMethod : coin.getMethods()) {
-      TypedOperation mc = createMethodCall(publicMethod, declaringType, true);
+      TypedOperation mc = createMethodCall(publicMethod, declaringType);
       if (publicMethod.getName().equals("value")) {
         assertTrue(
             "enum method " + publicMethod.toGenericString() + " should occur", actual.contains(mc));
@@ -303,7 +303,7 @@ public class EnumReflectionTest {
     }
 
     for (Method publicMethod : op.getMethods()) {
-      TypedOperation mc = createMethodCall(publicMethod, declaringType, true);
+      TypedOperation mc = createMethodCall(publicMethod, declaringType);
       if (overrides.contains(publicMethod.getName())) {
         assertTrue("enum method " + mc + " should occur", actual.contains(mc));
         count++;
@@ -338,9 +338,8 @@ public class EnumReflectionTest {
     return new TypedClassOperation(op, declaringType, new TypeTuple(paramTypes), declaringType);
   }
 
-  private TypedClassOperation createMethodCall(
-      Method m, ClassOrInterfaceType declaringType, boolean isAccessible) {
-    MethodCall op = new MethodCall(m, isAccessible);
+  private TypedClassOperation createMethodCall(Method m, ClassOrInterfaceType declaringType) {
+    MethodCall op = new MethodCall(m);
     List<Type> paramTypes = new ArrayList<>();
     paramTypes.add(declaringType);
     for (java.lang.reflect.Type t : m.getGenericParameterTypes()) {

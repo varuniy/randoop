@@ -11,7 +11,6 @@ import randoop.ExceptionalExecution;
 import randoop.ExecutionOutcome;
 import randoop.Globals;
 import randoop.NormalExecution;
-import randoop.reflection.AccessibilityPredicate;
 import randoop.reflection.ReflectionPredicate;
 import randoop.sequence.Variable;
 import randoop.types.Type;
@@ -46,13 +45,14 @@ public final class MethodCall extends CallableOperation {
   private final boolean isStatic;
 
   /**
-   * True if the method is accessible. If {@code --only-test-public-members} is set to true, a
-   * method is considered accessible iff it's public. Additionally, if {@code --junit-package-name}
-   * is null, a method is considered accessible iff it's public. Otherwise, a method is considered
+   * True if the method should be called reflectively. (This is generally because the method is not
+   * accessible from the JUnit code.) If {@code --only-test-public-members} is set to true, a method
+   * is considered accessible iff it's public. Additionally, if {@code --junit-package-name} is
+   * null, a method is considered accessible iff it's public. Otherwise, a method is considered
    * accessible if it is either public or accessible relative to the given package name specified by
-   * {@code --junit-package-name}
+   * {@code --junit-package-name}.
    */
-  private boolean isAccessible;
+  private boolean callReflectively;
 
   /**
    * getMethod returns Method object of this MethodCall.
@@ -66,17 +66,28 @@ public final class MethodCall extends CallableOperation {
   /**
    * Creates an object corresponding to a call to the given method.
    *
+   * <p>In generated tests, the method will be called normally, not reflectively.
+   *
    * @param method the reflective method object
-   * @param isAccessible boolean indicating if the method is accessible
    */
-  public MethodCall(Method method, boolean isAccessible) {
+  public MethodCall(Method method) {
+    this(method, false);
+  }
+
+  /**
+   * Creates an object corresponding to a call to the given method.
+   *
+   * @param method the reflective method object
+   * @param callReflectively if true, the method should be called reflectively
+   */
+  public MethodCall(Method method, boolean callReflectively) {
     if (method == null) {
       throw new IllegalArgumentException("method should not be null.");
     }
 
     this.method = method;
     this.isStatic = Modifier.isStatic(method.getModifiers() & Modifier.methodModifiers());
-    this.isAccessible = isAccessible;
+    this.callReflectively = callReflectively;
   }
 
   /**
@@ -110,7 +121,30 @@ public final class MethodCall extends CallableOperation {
     // The name of a variable (in the test that Randoop outputs) that holds the Method object.
     String methodVar = getVariableNameForMethodObject();
 
-    if (!isAccessible) {
+    if (!callReflectively) {
+      if (isStatic()) {
+        // In the generated Java code, the "receiver" (before the method name) for a static method
+        // call is the class name.
+        sb.append(declaringType.getCanonicalName().replace('$', '.'));
+      } else {
+        // In the generated Java code, the receiver is an expression.
+        String receiverVar = isStatic() ? null : inputVars.get(0).getName();
+        Type receiverFormalType = inputTypes.get(0);
+        if (receiverFormalType.isPrimitive()) {
+          sb.append("((")
+              .append(receiverFormalType.getFqName())
+              .append(")")
+              .append(receiverVar)
+              .append(")");
+        } else {
+          sb.append(receiverVar);
+        }
+      }
+
+      sb.append(".");
+      sb.append(methodName);
+    } else {
+      // TODO: For brevity here, perhaps abstract this `if` statement into a separate method.
       if (!Globals.makeAccessibleCode.containsKey(methodVar)) {
         StringBuilder makeMethodAccessibleBuilder = new StringBuilder();
         makeMethodAccessibleBuilder
@@ -133,32 +167,7 @@ public final class MethodCall extends CallableOperation {
             .append(System.lineSeparator());
         Globals.makeAccessibleCode.put(methodVar, makeMethodAccessibleBuilder.toString());
       }
-    }
 
-    String receiverVar = isStatic() ? null : inputVars.get(0).getName();
-    if (isAccessible) {
-      if (isStatic()) {
-        // In the generated Java code, the "receiver" (before the method name) for a static method
-        // call is the class name.
-        sb.append(declaringType.getCanonicalName().replace('$', '.'));
-      } else {
-        // In this branch, isAcessible == false.
-        // In the generated Java code, the receiver is an expression.
-        Type receiverFormalType = inputTypes.get(0);
-        if (receiverFormalType.isPrimitive()) {
-          sb.append("((")
-              .append(receiverFormalType.getFqName())
-              .append(")")
-              .append(receiverVar)
-              .append(")");
-        } else {
-          sb.append(receiverVar);
-        }
-      }
-
-      sb.append(".");
-      sb.append(methodName);
-    } else {
       if (!outputType.isVoid()) {
         // Cast because the return type of `invoke()` is Object.
         sb.append("(").append(outputType.getFqName()).append(") ");
@@ -168,9 +177,9 @@ public final class MethodCall extends CallableOperation {
 
     StringJoiner arguments = new StringJoiner(", ", "(", ")");
     // In a reflective call, a receiver is always passed (even if it's null).
-    int startIndex = !isAccessible || isStatic() ? 0 : 1;
+    int startIndex = callReflectively || isStatic() ? 0 : 1;
     for (int i = startIndex; i < inputVars.size(); i++) {
-      if (i == 0 && !isAccessible && isStatic()) {
+      if (i == 0 && callReflectively && isStatic()) {
         // There is no harm to passing inputVars.get(0), but pass
         // null to emphasize that the first (receiver) argument is ignored.
         sb.append("null");
@@ -356,8 +365,8 @@ public final class MethodCall extends CallableOperation {
         throw new OperationParseException(msg);
       }
     }
-    // accessibility predicate shouldn't matter for generating output type
-    return TypedClassOperation.forMethod(m, AccessibilityPredicate.IS_ANY);
+
+    return TypedClassOperation.forMethod(m);
   }
 
   /**

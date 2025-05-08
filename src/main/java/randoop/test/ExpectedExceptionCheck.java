@@ -17,7 +17,7 @@ import randoop.Globals;
 public class ExpectedExceptionCheck extends ExceptionCheck {
 
   /** A boolean indicating the accessibility of the method. */
-  private boolean isAccessible;
+  private boolean callReflectively;
 
   /**
    * Creates check that enforces expectation that an exception is thrown by the statement at the
@@ -32,9 +32,9 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
    * @param catchClassName the name of exception to be caught
    */
   public ExpectedExceptionCheck(
-      Throwable exception, int statementIndex, String catchClassName, boolean isAccessible) {
+      Throwable exception, int statementIndex, String catchClassName, boolean callReflectively) {
     super(exception, statementIndex, catchClassName);
-    this.isAccessible = isAccessible;
+    this.callReflectively = callReflectively;
   }
 
   /**
@@ -45,7 +45,9 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
   @Override
   protected void appendTryBehavior(StringBuilder b) {
     String assertionMessage;
-    {
+    if (callReflectively) {
+      assertionMessage = "Expected exception of type java.lang.reflect.InvocationTargetException";
+    } else {
       String message;
       if (exception.getClass().isAnonymousClass()) {
         message = "Expected anonymous exception";
@@ -58,14 +60,7 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
         }
         message = "Expected exception of type " + getExceptionName() + exceptionMessage;
       }
-      if (isAccessible) {
-        assertionMessage = "org.junit.Assert.fail(\"" + StringsPlume.escapeJava(message) + "\")";
-      } else {
-        assertionMessage =
-            "org.junit.Assert.fail(\""
-                + "Expected exception of type java.lang.reflect.InvocationTargetException"
-                + "\")";
-      }
+      assertionMessage = "org.junit.Assert.fail(\"" + StringsPlume.escapeJava(message) + "\")";
     }
     b.append(Globals.lineSep)
         .append("  org.junit.Assert.fail(\"")
@@ -95,7 +90,7 @@ public class ExpectedExceptionCheck extends ExceptionCheck {
    */
   @Override
   protected void appendCatchBehavior(StringBuilder b, String catchClassName) {
-    if (!isAccessible) {
+    if (callReflectively) {
       b.append("catch (")
           .append("java.lang.reflect.InvocationTargetException")
           .append(" e) {")
